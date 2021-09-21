@@ -11,14 +11,12 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   bool isLoading = false;
-  late int selectedIndex = -1;
   late List<Country> country;
 
   @override
   void initState() {
-    ApiService().get();
     super.initState();
-
+    country = <Country>[];
     refreshCountry();
   }
 
@@ -30,12 +28,18 @@ class _HomeState extends State<Home> {
   }
 
   Future refreshCountry() async {
+    await ApiService().get();
     setState(() => isLoading = true);
 
-    this.country = await DBProvider.instance.readAllCountry();
+    country = await DBProvider.instance.readAllCountry();
 
     setState(() => isLoading = false);
+
+
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +61,7 @@ class _HomeState extends State<Home> {
         body: Column(
           children: [
             Expanded(
-              child: isLoading
+              child: isLoading || country.isEmpty
                   ? const Center(
                       child: CircularProgressIndicator(),
                     )
@@ -67,42 +71,30 @@ class _HomeState extends State<Home> {
                       itemBuilder: (context, index) {
                         var con = country[index];
                         late var select = country[index].isSelected;
-                        return InkWell(
-                          onTap: () async {
-                            if (selectedIndex == -1) {
-                              setState(() {
-                                selectedIndex = index;
-                                con.isSelected = true;
-                              });
-                            } else {
-                              setState(() {
-                                country[selectedIndex].isSelected = false;
-                                selectedIndex = index;
-                                con.isSelected = true;
-                              });
-                            }
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DetailScreen(country: con),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            height: 80,
-                            width: width,
-                            color: index % 2 == 0
-                                ? Colors.white
-                                : Colors.grey[300],
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0, horizontal: 10),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Row(
+                        return Container(
+                          height: 80,
+                          width: width,
+                          color: index % 2 == 0
+                              ? Colors.white
+                              : Colors.grey[300],
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8.0, horizontal: 10),
+                            child: Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                InkWell(
+                                  onTap: () async {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DetailScreen(country: con),
+                                      ),
+                                    );
+                                  },
+                                  child: Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -142,14 +134,25 @@ class _HomeState extends State<Home> {
                                       ),
                                     ],
                                   ),
-                                  Icon(
-                                    con.isSelected
-                                        ? Icons.favorite
-                                        : Icons.favorite_border_rounded,
-                                    color: Colors.black,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      country[index].isSelected = !country[index].isSelected;
+                                    });
+                                  },
+                                  child: SizedBox(
+                                    height: 80,
+                                    width: 40,
+                                    child: Icon(
+                                      con.isSelected
+                                          ? Icons.favorite
+                                          : Icons.favorite_border_rounded,
+                                      color: Colors.black,
+                                    ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         );
@@ -162,3 +165,4 @@ class _HomeState extends State<Home> {
     );
   }
 }
+
